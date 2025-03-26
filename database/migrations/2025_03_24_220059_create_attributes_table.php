@@ -17,6 +17,9 @@ return new class extends Migration
             $table->enum('type', ['text', 'number', 'boolean', 'date', 'select']);
             $table->json('options')->nullable(); // For 'select' type
             $table->timestamps();
+
+            $table->index('name');
+            $table->index('type');
         });
     }
 

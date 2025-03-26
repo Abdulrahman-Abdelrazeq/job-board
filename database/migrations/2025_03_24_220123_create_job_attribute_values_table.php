@@ -17,6 +17,10 @@ return new class extends Migration
             $table->foreignId('attribute_id')->constrained()->cascadeOnDelete();
             $table->text('value');
             $table->timestamps();
+
+            $table->index('job_id');
+            $table->index('attribute_id');
+            $table->index('value');
         });
     }
 

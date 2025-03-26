@@ -15,6 +15,9 @@ return new class extends Migration
             $table->foreignId('job_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->primary(['job_id', 'category_id']);
+
+            $table->index('job_id');
+            $table->index('category_id');
         });
     }
 

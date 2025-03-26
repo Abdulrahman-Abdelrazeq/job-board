@@ -20,14 +20,4 @@ class JobAttributeValue extends Model
     {
         return $this->belongsTo(Attribute::class);
     }
-
-    // public function getValueAttribute($value) {
-    //     $type = $this->attribute->type;
-    //     return match ($type) {
-    //         'number' => (float) $value,
-    //         'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-    //         'date' => \Carbon\Carbon::parse($value),
-    //         default => $value,
-    //     };
-    // }
 }

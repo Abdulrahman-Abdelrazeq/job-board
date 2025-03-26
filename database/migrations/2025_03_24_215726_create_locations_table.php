@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('country');
             $table->timestamps();
+
+            $table->index('city');
+            $table->index('state');
+            $table->index('country');
         });
     }
 
