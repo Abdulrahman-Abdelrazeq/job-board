@@ -138,9 +138,11 @@ class JobFilterService
         $query = $query ?: $this->query;
         $operators = ['!=', '>=', '<=', '=', '>', '<', 'HAS_ANY', 'IS_ANY', 'EXISTS', 'LIKE', 'IN'];
         $operator = $this->findOperator($condition, $operators);
+
         if (!$operator) {
             throw new \InvalidArgumentException("Invalid operator in condition: $condition");
         }
+        
         [$field, $value] = $this->splitCondition($condition, $operator);
         $value = $this->cleanValue($value);
         $this->applyFieldCondition($query, $field, $operator, $value);
