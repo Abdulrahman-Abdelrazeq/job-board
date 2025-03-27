@@ -11,11 +11,7 @@ class JobFilterService
     private Builder $query;
     private array $params;
 
-    /**
-     * Constructor to initialize the service with request parameters.
-     *
-     * @param array $params Request parameters.
-     */
+    // Constructor to initialize the service with request parameters.
     public function __construct(array $params)
     {
         $this->params = $params;
@@ -27,11 +23,7 @@ class JobFilterService
         ]);
     }
 
-    /**
-     * Apply filters and return the query.
-     *
-     * @return Builder
-     */
+    // Apply filters and return the query.
     public function apply(): Builder
     {
         if (isset($this->params['filter'])) {
@@ -40,12 +32,7 @@ class JobFilterService
         return $this->query;
     }
 
-    /**
-     * Parse the filter string.
-     *
-     * @param string $filter
-     * @return void
-     */
+    // Parse the filter string.
     private function parseFilter(string $filter): void
     {
         $filter = trim($filter);
@@ -58,12 +45,8 @@ class JobFilterService
         $this->parseCondition($filter);
     }
 
-    /**
-     * Parse a group of conditions.
-     *
-     * @param string $group
-     * @return void
-     */
+    //  Parse a group of conditions.
+
     private function parseGroup(string $group): void
     {
         $parts = $this->splitConditions($group);
@@ -219,15 +202,8 @@ class JobFilterService
         });
     }
 
-    /**
-     * Apply relationship condition.
-     *
-     * @param Builder $query
-     * @param string $relation
-     * @param string $operator
-     * @param mixed $value
-     * @return void
-     */
+    // Apply relationship condition.
+
     private function applyRelationshipCondition(Builder $query, string $relation, string $operator, $value): void
     {
         $values = is_array($value) ? $value : explode(',', $value);
@@ -261,15 +237,7 @@ class JobFilterService
         }
     }
 
-    /**
-     * Apply standard condition.
-     *
-     * @param Builder $query
-     * @param string $field
-     * @param string $operator
-     * @param mixed $value
-     * @return void
-     */
+    // Apply standard condition.
     private function applyStandardCondition(Builder $query, string $field, string $operator, $value): void
     {
         $castValue = $this->castValue($field, $value);
@@ -304,13 +272,7 @@ class JobFilterService
         }
     }
 
-    /**
-     * Helper method to find an operator in a condition.
-     *
-     * @param string $condition
-     * @param array $operators
-     * @return string|null
-     */
+    // Helper method to find an operator in a condition.
     private function findOperator(string $condition, array $operators): ?string
 {
     foreach ($operators as $op) {
@@ -322,13 +284,7 @@ class JobFilterService
     return null;
 }
 
-    /**
-     * Split a condition into field and value.
-     *
-     * @param string $condition
-     * @param string $operator
-     * @return array
-     */
+    // Split a condition into field and value.
     private function splitCondition(string $condition, string $operator): array
     {
         $pattern = '/^([^=\>\<\!\s]+)\s*' . preg_quote($operator, '/') . '\s*(.+)$/';
@@ -338,12 +294,7 @@ class JobFilterService
         throw new \InvalidArgumentException("Invalid condition format: $condition");
     }
 
-    /**
-     * Clean the value by removing parentheses if present.
-     *
-     * @param mixed $value
-     * @return mixed
-     */
+    // Clean the value by removing parentheses if present.
     private function cleanValue($value)
     {
         if (is_string($value)) {
@@ -357,13 +308,7 @@ class JobFilterService
         return $value;
     }
 
-    /**
-     * Cast the value based on the field type.
-     *
-     * @param string $field
-     * @param mixed $value
-     * @return mixed
-     */
+    // Cast the value based on the field type.
     private function castValue(string $field, $value)
     {
         if (in_array($field, ['salary_min', 'salary_max'])) {
@@ -381,12 +326,7 @@ class JobFilterService
         return $value;
     }
 
-    /**
-     * Split conditions into parts.
-     *
-     * @param string $group
-     * @return array
-     */
+    // Split conditions into parts.
     private function splitConditions(string $group): array
     {
         $parts = [];
