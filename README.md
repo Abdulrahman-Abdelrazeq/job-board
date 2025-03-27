@@ -27,7 +27,7 @@ The application manages job listings with the following features:
 
 ```bash
 git clone https://github.com/Abdulrahman-Abdelrazeq/job-board.git
-cd job-board-api
+cd job-board
 ```
 
 ### Install Dependencies
@@ -67,7 +67,7 @@ Create the database (e.g., `job_board`) in your MySQL server.
 Run migrations and seed the database with sample data:
 
 ```bash
-php artisan migrate --seed
+php artisan migrate:fresh --seed
 ```
 
 ### Serve the Application
@@ -817,12 +817,6 @@ curl "http://localhost:8000/api/jobs?filter=(job_type=full-time AND (languages H
 ```
 
 Use the provided Postman collection for pre-configured requests.
-
-## Future Improvements
-
-- Input validation for filter syntax.
-- Caching frequently accessed queries.
-- Sorting and additional pagination options.
 
 ##
 
