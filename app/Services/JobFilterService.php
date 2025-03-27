@@ -136,17 +136,26 @@ class JobFilterService
     private function parseCondition(string $condition, ?Builder $query = null): void
     {
         $query = $query ?: $this->query;
+
+        // Clean the condition by removing outer parentheses if present
+        if (Str::startsWith($condition, '(') && Str::endsWith($condition, ')')) {
+            $condition = substr($condition, 1, -1);
+        }
+
         $operators = ['!=', '>=', '<=', '=', '>', '<', 'HAS_ANY', 'IS_ANY', 'EXISTS', 'LIKE', 'IN'];
         $operator = $this->findOperator($condition, $operators);
 
         if (!$operator) {
             throw new \InvalidArgumentException("Invalid operator in condition: $condition");
         }
-        
+
         [$field, $value] = $this->splitCondition($condition, $operator);
         $value = $this->cleanValue($value);
+
+        // Apply field condition based on the field type
         $this->applyFieldCondition($query, $field, $operator, $value);
     }
+    
 
     /**
      * Apply field condition based on the field type.
@@ -192,16 +201,11 @@ class JobFilterService
                     $q->where('value', '!=', $value);
                     break;
                 case '>':
-                    $q->where('value', '>', $value);
-                    break;
                 case '<':
-                    $q->where('value', '<', $value);
-                    break;
                 case '>=':
-                    $q->where('value', '>=', $value);
-                    break;
                 case '<=':
-                    $q->where('value', '<=', $value);
+                    // Convert TEXT to numeric for comparison
+                    $q->whereRaw("CAST(value AS UNSIGNED) $operator ?", [(int)$value]);
                     break;
                 case 'LIKE':
                     $q->where('value', 'LIKE', "%$value%");
@@ -229,19 +233,21 @@ class JobFilterService
         $values = is_array($value) ? $value : explode(',', $value);
         $values = array_map('trim', $values);
 
-        $query->whereHas($relation, function (Builder $q) use ($operator, $values) {
+        $column = $relation === 'locations' ? 'city' : 'name';
+
+        $query->whereHas($relation, function (Builder $q) use ($operator, $values, $column) {
             switch ($operator) {
                 case '=':
                 case 'IS_ANY':
-                    $q->whereIn('name', $values);
+                    $q->whereIn($column, $values);
                     break;
                 case 'HAS_ANY':
-                    $q->whereIn('name', $values);
+                    $q->whereIn($column, $values);
                     break;
                 case 'EXISTS':
                     break;
                 case '!=':
-                    $q->whereNotIn('name', $values);
+                    $q->whereNotIn($column, $values);
                     break;
                 default:
                     throw new \InvalidArgumentException("Unsupported operator '$operator' for relationship");
@@ -306,14 +312,15 @@ class JobFilterService
      * @return string|null
      */
     private function findOperator(string $condition, array $operators): ?string
-    {
-        foreach ($operators as $op) {
-            if (str_contains($condition, " $op ")) {
-                return $op;
-            }
+{
+    foreach ($operators as $op) {
+        // Use regex to find the operator without requiring spaces around it
+        if (preg_match('/\b' . preg_quote($op, '/') . '\b/', $condition)) {
+            return $op;
         }
-        return null;
     }
+    return null;
+}
 
     /**
      * Split a condition into field and value.
@@ -324,8 +331,11 @@ class JobFilterService
      */
     private function splitCondition(string $condition, string $operator): array
     {
-        $parts = explode(" $operator ", $condition, 2);
-        return [trim($parts[0]), trim($parts[1] ?? '')];
+        $pattern = '/^([^=\>\<\!\s]+)\s*' . preg_quote($operator, '/') . '\s*(.+)$/';
+        if (preg_match($pattern, $condition, $matches)) {
+            return [trim($matches[1]), trim($matches[2])];
+        }
+        throw new \InvalidArgumentException("Invalid condition format: $condition");
     }
 
     /**
@@ -336,8 +346,13 @@ class JobFilterService
      */
     private function cleanValue($value)
     {
-        if (is_string($value) && Str::startsWith($value, '(') && Str::endsWith($value, ')')) {
-            $value = substr($value, 1, -1);
+        if (is_string($value)) {
+            // Remove unnecessary parentheses
+            if (Str::startsWith($value, '(') && Str::endsWith($value, ')')) {
+                $value = substr($value, 1, -1);
+            }
+            // Trim any extra spaces
+            $value = trim($value);
         }
         return $value;
     }
@@ -377,21 +392,20 @@ class JobFilterService
         $parts = [];
         $current = '';
         $depth = 0;
-
         for ($i = 0; $i < strlen($group); $i++) {
             $char = $group[$i];
             if ($char === '(') $depth++;
             if ($char === ')') $depth--;
             if ($depth === 0 && $i > 0) {
-                $nextFour = substr($group, $i, 4);
-                $nextThree = substr($group, $i, 3);
-                if ($nextFour === ' AND ') {
+                $nextFour = strtoupper(substr($group, $i, 4));
+                $nextThree = strtoupper(substr($group, $i, 3));
+                if ($nextFour === ' AND ' || $nextFour === ' AND') {
                     $parts[] = trim($current);
                     $parts[] = 'AND';
                     $current = '';
                     $i += 3;
                     continue;
-                } elseif ($nextThree === ' OR ') {
+                } elseif ($nextThree === ' OR ' || $nextThree === ' OR') {
                     $parts[] = trim($current);
                     $parts[] = 'OR';
                     $current = '';
@@ -401,11 +415,9 @@ class JobFilterService
             }
             $current .= $char;
         }
-
         if (!empty($current)) {
             $parts[] = trim($current);
         }
-
         return $parts;
     }
 }
